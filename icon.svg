@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#4338CA"/>
+      <stop offset="100%" stop-color="#7C3AED"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background squircle -->
+  <rect x="16" y="16" width="992" height="992" rx="220" ry="220" fill="url(#bg)"/>
+  <rect x="16" y="16" width="992" height="992" rx="220" ry="220" fill="none" stroke="rgba(255,255,255,0.07)" stroke-width="2"/>
+
+  <!-- Full ring (subtle) -->
+  <circle cx="512" cy="512" r="210" fill="none" stroke="rgba(255,255,255,0.11)" stroke-width="34" stroke-linecap="round"/>
+
+  <!-- 270° progress arc: from 12 o'clock clockwise to 9 o'clock -->
+  <path d="M512 302 A210 210 0 1 1 302 512" fill="none" stroke="rgba(255,255,255,0.82)" stroke-width="34" stroke-linecap="round"/>
+
+  <!-- Dot at arc end (9 o'clock) -->
+  <circle cx="302" cy="512" r="22" fill="#FFFFFF"/>
+
+  <!-- Center dot -->
+  <circle cx="512" cy="512" r="10" fill="rgba(255,255,255,0.7)"/>
+
+  <!-- Minute hand (12 o'clock) -->
+  <line x1="512" y1="512" x2="512" y2="372" stroke="rgba(255,255,255,0.82)" stroke-width="10" stroke-linecap="round"/>
+
+  <!-- Hour hand (~2 o'clock) -->
+  <line x1="512" y1="512" x2="602" y2="422" stroke="rgba(255,255,255,0.5)" stroke-width="10" stroke-linecap="round"/>
+</svg>

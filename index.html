@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>StudyFlow — Study Time Tracker</title>
+  <link rel="icon" type="image/png" sizes="32x32" href="favicon.png">
+  <link rel="apple-touch-icon" href="icon_1024.png">
+  <link rel="stylesheet" href="styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <nav class="sidebar">
+    <div class="sidebar-brand">
+      <img src="icon_1024.png" alt="StudyFlow" class="brand-icon">
+      <h1>StudyFlow</h1>
+    </div>
+    <ul class="nav-links">
+      <li><a href="#" class="nav-link active" data-page="dashboard"><span class="nav-icon">&#9632;</span> Dashboard</a></li>
+      <li><a href="#" class="nav-link" data-page="timer"><span class="nav-icon">&#9200;</span> Timer</a></li>
+      <li><a href="#" class="nav-link" data-page="history"><span class="nav-icon">&#128203;</span> History</a></li>
+      <li><a href="#" class="nav-link" data-page="stats"><span class="nav-icon">&#128200;</span> Statistics</a></li>
+      <li><a href="#" class="nav-link" data-page="goals"><span class="nav-icon">&#127919;</span> Goals</a></li>
+      <li><a href="#" class="nav-link" data-page="subjects"><span class="nav-icon">&#128278;</span> Subjects</a></li>
+    </ul>
+    <div class="sidebar-footer">
+      <button id="export-btn" class="btn btn-sm btn-outline">Export Data</button>
+      <button id="import-btn" class="btn btn-sm btn-outline">Import Data</button>
+      <input type="file" id="import-file" accept=".json" hidden>
+    </div>
+  </nav>
+
+  <main class="main-content">
+    <!-- Dashboard Page -->
+    <section id="page-dashboard" class="page active">
+      <header class="page-header">
+        <h2>Dashboard</h2>
+        <span class="date-display" id="current-date"></span>
+      </header>
+      <div class="stats-grid">
+        <div class="stat-card accent-blue">
+          <div class="stat-value" id="dash-today-time">0h 0m</div>
+          <div class="stat-label">Today</div>
+          <div class="stat-progress"><div class="stat-progress-bar" id="dash-goal-bar"></div></div>
+        </div>
+        <div class="stat-card accent-green">
+          <div class="stat-value" id="dash-week-time">0h 0m</div>
+          <div class="stat-label">This Week</div>
+        </div>
+        <div class="stat-card accent-purple">
+          <div class="stat-value" id="dash-streak">0 days</div>
+          <div class="stat-label">Current Streak</div>
+        </div>
+        <div class="stat-card accent-orange">
+          <div class="stat-value" id="dash-total-sessions">0</div>
+          <div class="stat-label">Total Sessions</div>
+        </div>
+      </div>
+      <div class="dashboard-charts">
+        <div class="chart-card">
+          <h3>This Week</h3>
+          <canvas id="dash-week-chart"></canvas>
+        </div>
+        <div class="chart-card">
+          <h3>Subject Breakdown (This Week)</h3>
+          <canvas id="dash-subject-chart"></canvas>
+        </div>
+      </div>
+      <div class="card">
+        <h3>Recent Sessions</h3>
+        <div id="dash-recent-sessions" class="session-list"></div>
+      </div>
+    </section>
+
+    <!-- Timer Page -->
+    <section id="page-timer" class="page">
+      <header class="page-header">
+        <h2>Study Timer</h2>
+      </header>
+      <div class="timer-container">
+        <div class="technique-selector">
+          <button class="technique-btn active" data-technique="pomodoro">Pomodoro<span>25 / 5</span></button>
+          <button class="technique-btn" data-technique="long-pomodoro">Long Focus<span>50 / 10</span></button>
+          <button class="technique-btn" data-technique="5217">52 / 17<span>52 / 17</span></button>
+          <button class="technique-btn" data-technique="stopwatch">Stopwatch<span>Free</span></button>
+          <button class="technique-btn" data-technique="custom">Custom<span>Set your own</span></button>
+        </div>
+        <div id="custom-settings" class="custom-settings hidden">
+          <div class="custom-row">
+            <label>Focus (min):</label>
+            <input type="number" id="custom-focus" value="30" min="1" max="180">
+            <label>Break (min):</label>
+            <input type="number" id="custom-break" value="5" min="1" max="60">
+          </div>
+        </div>
+        <div class="timer-ring-wrapper">
+          <svg class="timer-ring" viewBox="0 0 260 260">
+            <circle class="timer-ring-bg" cx="130" cy="130" r="120" />
+            <circle class="timer-ring-progress" id="timer-progress" cx="130" cy="130" r="120" />
+          </svg>
+          <div class="timer-display">
+            <div class="timer-phase" id="timer-phase">Focus</div>
+            <div class="timer-time" id="timer-time">25:00</div>
+            <div class="timer-session-count" id="timer-session-count">Session 1 / 4</div>
+          </div>
+        </div>
+        <div class="timer-subject-row">
+          <label>Subject:</label>
+          <select id="timer-subject"></select>
+        </div>
+        <div class="timer-controls">
+          <button class="btn btn-primary btn-lg" id="timer-start">Start</button>
+          <button class="btn btn-secondary btn-lg hidden" id="timer-pause">Pause</button>
+          <button class="btn btn-danger btn-lg hidden" id="timer-stop">Stop & Save</button>
+        </div>
+        <div class="timer-notes">
+          <textarea id="timer-notes" placeholder="Session notes (optional)..." rows="2"></textarea>
+        </div>
+      </div>
+    </section>
+
+    <!-- History Page -->
+    <section id="page-history" class="page">
+      <header class="page-header">
+        <h2>Session History</h2>
+        <div class="history-filters">
+          <input type="date" id="history-date-from" class="input-field">
+          <span>to</span>
+          <input type="date" id="history-date-to" class="input-field">
+          <select id="history-subject-filter" class="input-field">
+            <option value="">All Subjects</option>
+          </select>
+          <button class="btn btn-sm btn-primary" id="history-filter-btn">Filter</button>
+        </div>
+      </header>
+      <div class="card">
+        <div id="history-list" class="session-list"></div>
+        <p id="history-empty" class="empty-state hidden">No sessions found.</p>
+      </div>
+    </section>
+
+    <!-- Statistics Page -->
+    <section id="page-stats" class="page">
+      <header class="page-header">
+        <h2>Statistics</h2>
+        <div class="stats-range-selector">
+          <button class="range-btn active" data-range="week">Week</button>
+          <button class="range-btn" data-range="month">Month</button>
+          <button class="range-btn" data-range="year">Year</button>
+        </div>
+      </header>
+      <div class="stats-overview-row">
+        <div class="stat-card accent-blue">
+          <div class="stat-value" id="stats-total-time">0h</div>
+          <div class="stat-label">Total Time</div>
+        </div>
+        <div class="stat-card accent-green">
+          <div class="stat-value" id="stats-avg-day">0h</div>
+          <div class="stat-label">Daily Average</div>
+        </div>
+        <div class="stat-card accent-purple">
+          <div class="stat-value" id="stats-best-day">0h</div>
+          <div class="stat-label">Best Day</div>
+        </div>
+        <div class="stat-card accent-orange">
+          <div class="stat-value" id="stats-sessions-count">0</div>
+          <div class="stat-label">Sessions</div>
+        </div>
+      </div>
+      <div class="dashboard-charts">
+        <div class="chart-card wide">
+          <h3>Study Time Over Period</h3>
+          <canvas id="stats-time-chart"></canvas>
+        </div>
+      </div>
+      <div class="dashboard-charts">
+        <div class="chart-card">
+          <h3>By Subject</h3>
+          <canvas id="stats-subject-chart"></canvas>
+        </div>
+        <div class="chart-card">
+          <h3>By Hour of Day</h3>
+          <canvas id="stats-hour-chart"></canvas>
+        </div>
+      </div>
+    </section>
+
+    <!-- Goals Page -->
+    <section id="page-goals" class="page">
+      <header class="page-header">
+        <h2>Goals</h2>
+      </header>
+      <div class="card">
+        <h3>Daily Study Goal</h3>
+        <div class="goal-setting">
+          <label>Target hours per day:</label>
+          <input type="number" id="goal-daily-hours" class="input-field" value="4" min="0.5" max="16" step="0.5">
+          <button class="btn btn-primary btn-sm" id="goal-save-btn">Save Goal</button>
+        </div>
+        <div class="goal-visual">
+          <div class="goal-ring-wrapper">
+            <svg class="goal-ring" viewBox="0 0 200 200">
+              <circle class="goal-ring-bg" cx="100" cy="100" r="90" />
+              <circle class="goal-ring-progress" id="goal-progress-ring" cx="100" cy="100" r="90" />
+            </svg>
+            <div class="goal-ring-text">
+              <div class="goal-percent" id="goal-percent">0%</div>
+              <div class="goal-detail" id="goal-detail">0h / 4h</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <h3>Weekly Goal Tracker</h3>
+        <div class="week-goal-grid" id="week-goal-grid"></div>
+      </div>
+      <div class="card">
+        <h3>Streaks</h3>
+        <div class="streaks-info">
+          <div class="streak-item">
+            <span class="streak-value" id="streak-current">0</span>
+            <span class="streak-label">Current Streak (days)</span>
+          </div>
+          <div class="streak-item">
+            <span class="streak-value" id="streak-best">0</span>
+            <span class="streak-label">Best Streak (days)</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Subjects Page -->
+    <section id="page-subjects" class="page">
+      <header class="page-header">
+        <h2>Subjects</h2>
+      </header>
+      <div class="card">
+        <div class="subject-form">
+          <input type="text" id="subject-name" class="input-field" placeholder="Subject name...">
+          <input type="color" id="subject-color" class="color-input" value="#6C63FF">
+          <button class="btn btn-primary" id="subject-add-btn">Add Subject</button>
+        </div>
+        <div id="subjects-list" class="subjects-list"></div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Notification sound (generated via Web Audio API in JS) -->
+  <!-- Modal for quick log -->
+  <div class="modal-overlay hidden" id="modal-overlay">
+    <div class="modal">
+      <h3 id="modal-title">Quick Log Session</h3>
+      <div class="modal-body" id="modal-body">
+        <div class="form-group">
+          <label>Subject:</label>
+          <select id="quick-subject" class="input-field"></select>
+        </div>
+        <div class="form-group">
+          <label>Duration (minutes):</label>
+          <input type="number" id="quick-duration" class="input-field" value="30" min="1">
+        </div>
+        <div class="form-group">
+          <label>Date:</label>
+          <input type="date" id="quick-date" class="input-field">
+        </div>
+        <div class="form-group">
+          <label>Notes:</label>
+          <textarea id="quick-notes" class="input-field" rows="2"></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" id="modal-cancel">Cancel</button>
+        <button class="btn btn-primary" id="modal-confirm">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <button class="fab" id="quick-log-fab" title="Quick log a session">+</button>
+
+  <script src="app.js"></script>
+</body>
+</html>
