@@ -328,16 +328,26 @@
     }
     showTimerButtons('running');
 
+    timerState._wcStart = Date.now();
+    timerState._remainingAtWcStart = timerState.remaining;
+    timerState._elapsedAtWcStart = timerState.elapsed;
+    timerState._focusAccAtWcStart = timerState.focusAccumulated;
+
     timerState.intervalId = setInterval(() => {
+      const secondsPassed = Math.floor((Date.now() - timerState._wcStart) / 1000);
+
       if (timerState.technique === 'stopwatch') {
-        timerState.elapsed++;
-        timerState.focusAccumulated++;
+        timerState.elapsed = timerState._elapsedAtWcStart + secondsPassed;
+        timerState.focusAccumulated = timerState._focusAccAtWcStart + secondsPassed;
         $('#timer-time').textContent = fmtSeconds(timerState.elapsed);
         const maxDisplay = 3600;
         updateRing(Math.min(timerState.elapsed / maxDisplay, 1));
         updateDocTitle(fmtSeconds(timerState.elapsed));
       } else {
-        timerState.remaining--;
+        timerState.remaining = timerState._remainingAtWcStart - secondsPassed;
+        if (timerState.phase === 'focus') {
+          timerState.focusAccumulated = timerState._focusAccAtWcStart + Math.min(secondsPassed, timerState._remainingAtWcStart);
+        }
         if (timerState.remaining < 0) {
           handlePhaseEnd(t);
           return;
@@ -345,7 +355,6 @@
         const fraction = 1 - timerState.remaining / timerState.totalSeconds;
         updateRing(fraction);
         $('#timer-time').textContent = fmtSeconds(timerState.remaining);
-        if (timerState.phase === 'focus') timerState.focusAccumulated++;
         updateDocTitle(fmtSeconds(timerState.remaining));
       }
     }, 1000);
@@ -377,6 +386,10 @@
     timerState.remaining = timerState.totalSeconds;
     updatePhaseStyle();
     updateRing(0);
+
+    timerState._wcStart = Date.now();
+    timerState._remainingAtWcStart = timerState.remaining;
+    timerState._focusAccAtWcStart = timerState.focusAccumulated;
   }
 
   function pauseTimer() {
@@ -386,12 +399,34 @@
     } else {
       timerState.paused = true;
       clearInterval(timerState.intervalId);
+
+      const secondsPassed = Math.floor((Date.now() - timerState._wcStart) / 1000);
+      if (timerState.technique === 'stopwatch') {
+        timerState.elapsed = timerState._elapsedAtWcStart + secondsPassed;
+        timerState.focusAccumulated = timerState._focusAccAtWcStart + secondsPassed;
+      } else {
+        timerState.remaining = timerState._remainingAtWcStart - secondsPassed;
+        if (timerState.phase === 'focus') {
+          timerState.focusAccumulated = timerState._focusAccAtWcStart + Math.min(secondsPassed, timerState._remainingAtWcStart);
+        }
+      }
+
       showTimerButtons('paused');
     }
   }
 
   function stopAndSave() {
     clearInterval(timerState.intervalId);
+
+    if (timerState._wcStart) {
+      const secondsPassed = Math.floor((Date.now() - timerState._wcStart) / 1000);
+      if (timerState.technique === 'stopwatch') {
+        timerState.focusAccumulated = timerState._focusAccAtWcStart + secondsPassed;
+      } else if (timerState.phase === 'focus') {
+        timerState.focusAccumulated = timerState._focusAccAtWcStart + Math.min(secondsPassed, timerState._remainingAtWcStart);
+      }
+    }
+
     timerState.running = false;
     timerState.paused = false;
     document.title = 'StudyFlow — Study Time Tracker';
